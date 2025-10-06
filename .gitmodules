@@ -1,0 +1,11 @@
+[submodule "vendors/glad"]
+	path = vendors/glad
+	url = https://www.github.com/Dav1dde/glad
+	branch = c
+[submodule "vendors/imgui"]
+	path = vendors/imgui
+	url = https://www.github.com/ocornut/imgui
+	branch = docking
+[submodule "vendors/glfw"]
+	path = vendors/glfw
+	url = https://www.github.com/glfw/glfw
