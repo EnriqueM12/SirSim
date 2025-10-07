@@ -34,6 +34,10 @@ public:
     template<typename T>
     int PushLayer();
     void Run();
+
+    static inline App& GetInstance() {
+        if (!_instance) throw std::runtime_error("ERROR fetching nonexistent instance of application");
+        return *_instance; }
 };
 }; 
 

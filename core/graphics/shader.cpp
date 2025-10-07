@@ -7,6 +7,8 @@
 //
 // constructors 
 //
+sscore::Shader::Shader(): _is_ready(false) {}
+
 sscore::Shader::Shader(const std::string& source) {
     _is_ready = false;
     create(source);

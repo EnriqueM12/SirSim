@@ -77,13 +77,14 @@ void sscore::App::Run() {
         glfwGetWindowSize(_main_window, &width, &height);
         glViewport(0, 0, width, height); 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         ImGui_ImplGlfw_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
 
         for (auto& layer : _layers) {
             if (layer->_is_active) 
-                layer->on_render();
+                layer->gui_render();
         }
 
         ImGui::EndFrame();
@@ -92,6 +93,12 @@ void sscore::App::Run() {
         glfwSwapBuffers(_main_window);
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(_main_window);
+
+        for (auto& layer : _layers) {
+            if (layer->_is_active) 
+                layer->on_render();
+        }
 
         for (auto& layer : _layers) {
             if (layer->_is_active) 

@@ -12,6 +12,7 @@ private:
     void create(const std::string& source);
 public:
     Shader(const std::string& source);
+    Shader();
     ~Shader();
 
     void AttachShader(const std::string& source);

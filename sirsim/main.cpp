@@ -1,3 +1,4 @@
+#include "sirsim/scene2d.h"
 #include <core/sirsim.h>
 
 namespace App {
@@ -7,7 +8,7 @@ public:
     AppLayer();
 
     void init();
-    void on_render();
+    void gui_render();
 };
 
 };
@@ -22,5 +23,6 @@ int main(int argc, char** argv) {
     sscore::App sirsim(config);
 
     sirsim.PushLayer<App::AppLayer>();
+    sirsim.PushLayer<App::SceneViewer2D>();
     sirsim.Run();
 }

@@ -16,9 +16,10 @@ private:
 protected:
     virtual ~Layer() {}
 
-    virtual void init() {}
+    virtual void init() { SetActive(true); }
     virtual void terimnate() {}
     virtual void update() {}
+    virtual void gui_render() {}
     virtual void on_render() {}
 
 public:
