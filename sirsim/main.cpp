@@ -1,5 +1,16 @@
-#include "sirsim/sirsim.h"
 #include <core/sirsim.h>
+
+namespace App {
+
+class AppLayer : public sscore::Layer {
+public:
+    AppLayer();
+
+    void init();
+    void on_render();
+};
+
+};
 
 int main(int argc, char** argv) {
     sscore::AppConfig config;

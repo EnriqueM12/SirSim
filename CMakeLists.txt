@@ -41,3 +41,13 @@ file(GLOB_RECURSE SIRSIM_APP_SOURCES sirsim/*.cpp)
 file(GLOB_RECURSE SIRSIM_APP_HEADERS sirsim/*.h)
 add_executable(SirSim ${SIRSIM_APP_SOURCES} ${SIRSIM_APP_HEADERS})
 target_link_libraries(SirSim SirSimCore)
+
+add_custom_command(TARGET SirSim
+    PRE_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E remove_directory
+    "${CMAKE_BINARY_DIR}/shaders")
+add_custom_command(TARGET SirSim
+    POST_BUILD 
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory
+    "${CMAKE_SOURCE_DIR}/shaders"
+    "${CMAKE_BINARY_DIR}/shaders")
