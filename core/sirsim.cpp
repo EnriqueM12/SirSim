@@ -1,4 +1,5 @@
 #include "core/sirsim.h"
+#include <chrono>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -7,7 +8,18 @@
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_glfw.h>
 
+//
+// App Class 
+// Static Instance
+//
+
 sscore::App* sscore::App::_instance = nullptr;
+
+
+//
+// App Class 
+// Constructor/Destructor
+//
 
 //
 // application initialization
@@ -65,12 +77,29 @@ sscore::App::~App() {
     _instance = nullptr;
 }
 
+
+//
+// App Class 
+// Public Methods
+//
+
 void sscore::App::Run() {
+    // update all layers
     for (auto& layer : _layers)
         layer->init();
 
+    // get frame timing data
+    _last_frame = std::chrono::high_resolution_clock::now();
+
+    // main loop
     while (!glfwWindowShouldClose(_main_window)) {
-        // imgui and glfw pre
+        // calculate frame timing data
+        TimePoint now = std::chrono::high_resolution_clock::now();
+        long long mili = std::chrono::duration_cast<std::chrono::milliseconds>(now - _last_frame).count();
+        _last_frame = now;
+        _dt = mili / 1000.0;
+
+        // imgui and glfw pre rendering
         glfwPollEvents();
         glfwMakeContextCurrent(_main_window);
         int width, height;
@@ -82,11 +111,13 @@ void sscore::App::Run() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
 
+        // render layers
         for (auto& layer : _layers) {
             if (layer->_is_active) 
                 layer->gui_render();
         }
 
+        // imgui and glfw post rendering
         ImGui::EndFrame();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -95,14 +126,20 @@ void sscore::App::Run() {
         ImGui::RenderPlatformWindowsDefault();
         glfwMakeContextCurrent(_main_window);
 
+        // draw specific layer information
         for (auto& layer : _layers) {
             if (layer->_is_active) 
                 layer->on_render();
         }
 
+        // update layers
         for (auto& layer : _layers) {
             if (layer->_is_active) 
                 layer->update();
         }
     }
+}
+
+float sscore::App::GetDeltaTime() {
+    return _dt;
 }

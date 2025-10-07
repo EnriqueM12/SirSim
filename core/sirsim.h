@@ -1,5 +1,6 @@
 #pragma once
 #include "core/layer.h"
+#include <chrono>
 
 class GLFWwindow;
 class ImGuiContext;
@@ -17,6 +18,8 @@ struct AppConfig {
 
 class App {
 private:
+    using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+
     friend class Layer;
     static App* _instance;
 
@@ -24,6 +27,8 @@ private:
 
     GLFWwindow* _main_window;
     ImGuiContext* _main_context;
+    TimePoint _last_frame;
+    float _dt;
 
     template <typename T>
     void swap_layer(int i);
@@ -34,6 +39,7 @@ public:
     template<typename T>
     int PushLayer();
     void Run();
+    float GetDeltaTime();
 
     static inline App& GetInstance() {
         if (!_instance) throw std::runtime_error("ERROR fetching nonexistent instance of application");

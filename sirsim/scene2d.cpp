@@ -5,6 +5,14 @@
 
 // 
 // SceneViewer2D
+// Constructor
+//
+
+App::SceneViewer2D::SceneViewer2D(): _sim(500, 200) {}
+App::SceneViewer2D::~SceneViewer2D() {}
+
+// 
+// SceneViewer2D
 // Layer Methods
 //
 
@@ -27,7 +35,7 @@ void App::SceneViewer2D::gui_render() {
     ImGui::Begin("2D Viewer");
     _size = ImGui::GetContentRegionAvail();
     glBindTexture(GL_TEXTURE_2D, _texture_id);
-    ImGui::Image(_texture_id, _size, ImVec2(1.0, 0), ImVec2(0.0, 1.0));
+    ImGui::Image(_texture_id, _size, ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
     ImGui::End();
 }
 
@@ -45,13 +53,14 @@ void App::SceneViewer2D::on_render() {
 
     render_grid();
 
+    glBindTexture(GL_TEXTURE_2D, _texture_id);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
             GL_TEXTURE_2D, _texture_id, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void App::SceneViewer2D::update() {
-
+    _sim.UpdateFrame(sscore::App::GetInstance().GetDeltaTime());
 }
 
 void App::SceneViewer2D::terminate() {
@@ -80,12 +89,27 @@ void App::SceneViewer2D::initialize_grid() {
     glEnableVertexAttribArray(0);
 
     _grid_shader.AttachShader("grid");
+
+    glGenTextures(1, &_sim_texture);
+    glBindTexture(GL_TEXTURE_2D, _sim_texture);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void App::SceneViewer2D::render_grid() {
     glBindVertexArray(_grid_vao);
     _grid_shader.Use();
     glUniform2f(0, _size.x, _size.y);
+    glUniform2f(1, (float) _sim.GetWidth(), (float) _sim.GetHeight());
+
+    glBindTexture(GL_TEXTURE_2D, _sim_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, _sim.GetWidth(),
+            _sim.GetHeight(), 0, GL_RED, GL_FLOAT, _sim.GetDensity());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 

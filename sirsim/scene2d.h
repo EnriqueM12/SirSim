@@ -1,5 +1,7 @@
 #pragma once
 #include "imgui.h"
+#include "simulation/basic_navierstokes.h"
+
 #include <core/sirsim.h>
 #include <core/graphics/shader.h>
 
@@ -12,6 +14,9 @@ class SceneViewer2D : public sscore::Layer {
     unsigned int _grid_vao;
     ImVec2 _size;
 
+    BasicNavierStokes _sim;
+
+    unsigned int _sim_texture;
 
     void init();
     void on_render();
@@ -22,5 +27,9 @@ class SceneViewer2D : public sscore::Layer {
     void initialize_grid();
     void render_grid(); 
     void delete_grid();
+
+public:
+    SceneViewer2D();
+    ~SceneViewer2D();
 };
 };
