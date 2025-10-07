@@ -76,7 +76,7 @@ void App::SceneViewer2D::initialize_grid() {
     char _verts[] = {0, 1, 2, 3};
     glBufferData(GL_ARRAY_BUFFER, sizeof(_verts), _verts, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 1, GL_BYTE, GL_FALSE, sizeof(char), (void*) 0);
+    glVertexAttribIPointer(0, 1, GL_BYTE, sizeof(char), (void*) 0);
     glEnableVertexAttribArray(0);
 
     _grid_shader.AttachShader("grid");
