@@ -1,6 +1,8 @@
 # SirSim
 A lightweight engine for fluid simulations
 
+![Simulation](docs/title.png)
+
 ## Install and Build
 ### Linux 
 The only dependencies that this system should have is *X11*.
