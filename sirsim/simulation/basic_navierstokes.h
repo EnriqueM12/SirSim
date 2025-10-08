@@ -7,6 +7,8 @@ struct BasicNavierStokes {
     bool *_h_boundary;
     bool *_v_boundary;
 
+    int *_density_lookup;
+
     float *_dg1;
     float *_dg2;
 
@@ -27,6 +29,8 @@ struct BasicNavierStokes {
     float get_density(int x, int y);
     bool is_mutable_h(int index);
     bool is_mutable_v(int index);
+    bool in_circle(int column, int row);
+    void get_closest(int column, int row);
 public: 
     BasicNavierStokes(int w, int h);
     ~BasicNavierStokes();

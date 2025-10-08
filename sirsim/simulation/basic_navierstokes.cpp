@@ -1,4 +1,5 @@
 #include "basic_navierstokes.h"
+#include <climits>
 #include <cstdlib>
 
 App::BasicNavierStokes::BasicNavierStokes(int w, int h) {
@@ -7,12 +8,13 @@ App::BasicNavierStokes::BasicNavierStokes(int w, int h) {
     _v_vels = new float[(h+1)*w];
     _h_boundary = new bool[(w+1)*h];
     _v_boundary = new bool[(h+1)*w];
+    _density_lookup = new int[w*h];
     _dg1 = new float[w*h];
     _dg2 = new float[w*h];
     _iterations = 32;
-    _over_correction = 1.9;
-    _res = 200.0;
-    _speed = 1;
+    _over_correction = 1.0;
+    _res = 0.5;
+    _speed = 100;
 
 
     std::memset(_dg1, 0, sizeof(float) * w * h);
@@ -34,19 +36,25 @@ App::BasicNavierStokes::BasicNavierStokes(int w, int h) {
         _h_boundary[j*(w+1) + w] = 1;
     }
 
-    // for (int j = 0; j < h; ++j) {
-    //     for (int i = 0; i < w; ++i) {
-    //         int xx = i - 200;
-    //         int yy = j - h / 2;
-    //
-    //         if (xx * xx + yy * yy <= 1000) {
-    //             _h_boundary[j*(w+1) + i] = 1;
-    //             _h_boundary[j*(w+1) + i + 1] = 1;
-    //             _v_boundary[j*w + i] = 1;
-    //             _v_boundary[(j+1)*w + i] = 1;
-    //         }
-    //     }
-    // }
+    for (int j = 0; j < h; ++j) {
+        for (int i = 0; i < w; ++i) {
+            if (in_circle(i, j)) {
+                _h_boundary[j*(w+1) + i] = 1;
+                _h_boundary[j*(w+1) + i + 1] = 1;
+                _v_boundary[j*w + i] = 1;
+                _v_boundary[(j+1)*w + i] = 1;
+            }
+        }
+    }
+
+    for (int j = 0; j < h; ++j) {
+        for (int i = 0; i < w; ++i) {
+            if (in_circle(i, j))
+                get_closest(i, j);
+            else 
+                _density_lookup[j*w + i] = j*w + i;
+        }
+    }
 
     for (int j = 0; j < h; ++j) 
         for (int i = 0; i < w+1; ++i) 
@@ -69,6 +77,7 @@ App::BasicNavierStokes::~BasicNavierStokes() {
     delete [] _v_vels;
     delete [] _h_boundary;
     delete [] _v_boundary;
+    delete [] _density_lookup;
     delete [] _dg1;
     delete [] _dg2; 
 }
@@ -95,23 +104,23 @@ void App::BasicNavierStokes::UpdateFrame(float dt) {
 }
 
 void App::BasicNavierStokes::external_forces(int column, int row, float dt) {
-    // if (is_mutable_v(row*_width + column)) 
-    //     _v_vels[row*_width + column] -= 9.81 * dt * 0.1;
+    if (is_mutable_v(row*_width + column)) 
+        _v_vels[row*_width + column] -= 9.81 * dt;
 }
 
 float App::BasicNavierStokes::divergence(int column, int row) {
     float left = _h_vels[row*(_width+1) + column];
     float right = -_h_vels[row*(_width+1) + column + 1];
-    float down = _v_vels[(row+1)*_width + column];
-    float up = -_v_vels[row*_width + column];
+    float down = _v_vels[(row)*_width + column];
+    float up = -_v_vels[(row+1)*_width + column];
     return left + right + down + up;
 }
 
 void App::BasicNavierStokes::decompress(float divergence, int column, int row) {
     int left = row*(_width+1) + column;
     int right = row*(_width+1) + column + 1;
-    int down = (row+1)*_width + column;
-    int up = row*_width + column;
+    int up = (row+1)*_width + column;
+    int down = row*_width + column;
     
     int _div = is_mutable_h(left) + is_mutable_h(right)
         + is_mutable_v(up) + is_mutable_v(down);
@@ -125,7 +134,7 @@ void App::BasicNavierStokes::decompress(float divergence, int column, int row) {
 }
 
 void App::BasicNavierStokes::calculate_density(int column, int row, float dt) {
-    // _dg2[row * _width + column] = _v_vels[row*(_width) + column] * 0.5 + 0.5;
+    // _dg2[row * _width + column] = _v_vels[row * (_width) + column] / 20.0 + 0.5;
     // return;
 
     float x_vel = (_h_vels[row*(_width+1) + column] + _h_vels[row*(_width+1) + column + 1]) * 0.5;
@@ -186,4 +195,24 @@ bool App::BasicNavierStokes::is_mutable_h(int index) {
 }
 bool App::BasicNavierStokes::is_mutable_v(int index) {
     return !_v_boundary[index];
+}
+
+bool App::BasicNavierStokes::in_circle(int column, int row) {
+    int xx = column - _width / 3;
+    int yy = row - _height / 2;
+
+    return (xx * xx + yy * yy <= _width*_width / 256);
+}
+
+void App::BasicNavierStokes::get_closest(int column, int row) {
+    int distance = INT_MAX;
+    int index;
+    for (int j = 0; j < _height; ++j) {
+        for (int i = 0; i < _width; ++i) {
+            if (!in_circle(i, j) && (i - column) * (i - column) + (j - row) * (j- row) < distance)
+                distance = (i - column) * (i - column) + (j - row) * (j- row),
+                index = j * _width + i;
+        }
+    }
+    _density_lookup[row * _width + column] = index;
 }

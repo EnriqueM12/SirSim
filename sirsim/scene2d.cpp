@@ -8,7 +8,7 @@
 // Constructor
 //
 
-App::SceneViewer2D::SceneViewer2D(): _sim(500, 200) {}
+App::SceneViewer2D::SceneViewer2D(): _sim(100, 50) {}
 App::SceneViewer2D::~SceneViewer2D() {}
 
 // 
@@ -54,6 +54,8 @@ void App::SceneViewer2D::on_render() {
     render_grid();
 
     glBindTexture(GL_TEXTURE_2D, _texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (int) _size.x, (int) _size.y,
+            0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
             GL_TEXTURE_2D, _texture_id, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
