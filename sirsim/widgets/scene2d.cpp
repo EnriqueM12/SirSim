@@ -8,8 +8,8 @@
 // Constructor
 //
 
-App::SceneViewer2D::SceneViewer2D(): _sim(200, 100) {}
-App::SceneViewer2D::~SceneViewer2D() {}
+App::SceneViewer2D::SceneViewer2D() {init();}
+App::SceneViewer2D::~SceneViewer2D() {terminate();}
 
 // 
 // SceneViewer2D
@@ -17,11 +17,10 @@ App::SceneViewer2D::~SceneViewer2D() {}
 //
 
 void App::SceneViewer2D::init() {
-    SetActive(true);
-
     initialize_grid();
 
     glCreateFramebuffers(1, &_frame_buffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glGenTextures(1, &_texture_id);
 
     glBindTexture(GL_TEXTURE_2D, _texture_id);
@@ -30,7 +29,7 @@ void App::SceneViewer2D::init() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void App::SceneViewer2D::gui_render() {
+void App::SceneViewer2D::Gui() {
 
     ImGui::Begin("2D Viewer");
     _size = ImGui::GetContentRegionAvail();
@@ -39,7 +38,7 @@ void App::SceneViewer2D::gui_render() {
     ImGui::End();
 }
 
-void App::SceneViewer2D::on_render() {
+void App::SceneViewer2D::DrawContents(float* data, int width, int height) {
     
     glBindFramebuffer(GL_FRAMEBUFFER, _frame_buffer);
     glBindTexture(GL_TEXTURE_2D, _texture_id);
@@ -51,7 +50,7 @@ void App::SceneViewer2D::on_render() {
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(1.0, 0.0, 0.5, 1.0);
 
-    render_grid();
+    render_grid(data, width, height);
 
     glBindTexture(GL_TEXTURE_2D, _texture_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (int) _size.x, (int) _size.y,
@@ -59,10 +58,6 @@ void App::SceneViewer2D::on_render() {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
             GL_TEXTURE_2D, _texture_id, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void App::SceneViewer2D::update() {
-    _sim.UpdateFrame(sscore::App::GetInstance().GetDeltaTime());
 }
 
 void App::SceneViewer2D::terminate() {
@@ -101,15 +96,15 @@ void App::SceneViewer2D::initialize_grid() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void App::SceneViewer2D::render_grid() {
+void App::SceneViewer2D::render_grid(float* data, int width, int height) {
     glBindVertexArray(_grid_vao);
     _grid_shader.Use();
     glUniform2f(0, _size.x, _size.y);
-    glUniform2f(1, (float) _sim.GetWidth(), (float) _sim.GetHeight());
+    glUniform2f(1, (float) width, (float) height);
 
     glBindTexture(GL_TEXTURE_2D, _sim_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, _sim.GetWidth(),
-            _sim.GetHeight(), 0, GL_RED, GL_FLOAT, _sim.GetDensity());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width,
+            height, 0, GL_RED, GL_FLOAT, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

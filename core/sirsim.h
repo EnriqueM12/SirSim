@@ -55,7 +55,7 @@ int sscore::App::PushLayer() {
     if (!std::is_base_of<Layer, T>())
         throw std::runtime_error("ERROR layer must inherit sscore::Layer");
 
-    _layers.push_back(new T());
+    _layers.push_back(static_cast<Layer*>(new T()));
     int index = _layers.size()-1;
     _layers[index]->_index = index;
     return index;

@@ -102,7 +102,7 @@ bool sscore::Shader::read_and_compile(int id, const std::string& source) {
     // load file contents into memory
     std::vector<char> ss;
     for (; !file.eof(); ss.push_back(file.get()));
-    ss.push_back('\0');
+    ss[ss.size()-1] = ('\0');
     const char* ss_ptr = &ss[0];
 
     // compile shader

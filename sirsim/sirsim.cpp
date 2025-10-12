@@ -1,27 +1,21 @@
-#include <core/sirsim.h>
+#include "sirsim.h"
+#include "sirsim/widgets/scene2d.h"
 
-#include "imgui.h"
-#include "sirsim/scene2d.h"
 
-namespace App {
-class AppLayer : public sscore::Layer {
-public:
-    AppLayer();
-
-    void init();
-    void gui_render();
-};
-};
-
-App::AppLayer::AppLayer() {
-}
+App::AppLayer::AppLayer(): _scene(), _sim(300, 150) {}
 
 void App::AppLayer::init() {
     SetActive(true);
 }
 
 void App::AppLayer::gui_render() {
-    ImGui::DockSpaceOverViewport();
-    ImGui::Begin("Another Window");
-    ImGui::End();
+    _scene.Gui();
+}
+
+void App::AppLayer::on_render() {
+    _scene.DrawContents(_sim.GetDensity(), _sim.GetWidth(), _sim.GetHeight());
+}
+
+void App::AppLayer::update() {
+    _sim.UpdateFrame(sscore::App::GetInstance().GetDeltaTime());
 }
