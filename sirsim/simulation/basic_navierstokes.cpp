@@ -11,10 +11,10 @@ App::BasicNavierStokes::BasicNavierStokes(int w, int h) {
     _density_lookup = new int[w*h];
     _dg1 = new float[w*h];
     _dg2 = new float[w*h];
-    _iterations = 32;
-    _over_correction = 1.0;
-    _res = 0.5;
-    _speed = 100;
+    _iterations = 10;
+    _over_correction = 1.9;
+    _res = 500;
+    _speed = 0.5;
 
 
     std::memset(_dg1, 0, sizeof(float) * w * h);
@@ -66,9 +66,16 @@ App::BasicNavierStokes::BasicNavierStokes(int w, int h) {
             if (is_mutable_v(j*(w) + i))
                 _v_vels[j*(_width) + i] = get_random_vel();
 
+    float _total_speed = 0.0;
     for (int j = 0; j < h; ++j) {
-        _h_vels[j * (_width + 1)] = _speed;
-        _h_vels[j * (_width + 1) + _width] = _speed;
+        // _h_vels[j * (_width + 1)] = _speed;
+        // _h_vels[j * (_width + 1) + _width] = _speed;
+        _h_vels[j * (_width + 1)] = std::abs(_speed * (1.0 * h / _height - 0.5));
+        _total_speed += _h_vels[j* (_width +1)];
+        // _h_vels[j * (_width + 1) + _width] = std::abs(_speed * (2.0 * h / _height + 1.0));
+    }
+    for (int j = 0; j < h; ++j) {
+        _h_vels[j * (_width + 1) + _width] = _total_speed / h;
     }
 }
 
@@ -88,12 +95,22 @@ void App::BasicNavierStokes::UpdateFrame(float dt) {
             external_forces(i, j, dt);
         
     for (int l = 0; l < _iterations; ++l ) {
+        // float upper_divergence = 0.0;
+        // for (int i = 0; i < _width; ++i) {
+        //     upper_divergence += _v_vels[_height * _width + i];
+        // }
+        //
+        // for (int i = 0; i < _width; ++i) {
+        //     _v_vels[_height * _width + i] -= _over_correction * upper_divergence / _width;
+        // }
+
         for (int j = 0; j < _height; ++j) {
             for (int i = 0; i < _width; ++i) {
                 float div = divergence(i, j);
                 decompress(div * _over_correction, i, j);
             }
         }
+
     }
 
     for (int j = 0; j < _height; ++j) 
@@ -104,8 +121,29 @@ void App::BasicNavierStokes::UpdateFrame(float dt) {
 }
 
 void App::BasicNavierStokes::external_forces(int column, int row, float dt) {
-    if (is_mutable_v(row*_width + column)) 
-        _v_vels[row*_width + column] -= 9.81 * dt;
+    float x_vel = (_h_vels[row * (_width + 1) + column]+ _h_vels[row * (_width + 1) + column + 1]) * 0.5;
+    float y_vel = (_v_vels[row * _width + column] + _v_vels[(row+1) * _width + column]) * 0.5;
+
+    float net_x = 0;
+    float net_y = -100;
+    net_x -= x_vel * x_grad_x(column, row);
+    net_x -= y_vel * x_grad_y(column, row);
+    net_y -= x_vel * y_grad_x(column, row);
+    net_y -= y_vel * y_grad_y(column, row);
+
+    if (std::abs(net_x) > std::abs(x_vel)) net_x = - x_vel;
+    if (std::abs(net_y) > std::abs(y_vel)) net_y = - y_vel;
+
+    int left = row*(_width+1) + column;
+    int right = row*(_width+1) + column + 1;
+    int up = (row+1)*_width + column;
+    int down = row*_width + column;
+
+    
+    _h_vels[left] += dt * is_mutable_h(left) * net_x / 2,
+    _h_vels[right] += dt * is_mutable_h(right) * net_x / 2;
+    _v_vels[up] += dt * is_mutable_v(up) * net_y / 2,
+    _v_vels[down] += dt * is_mutable_v(down) * net_y / 2;
 }
 
 float App::BasicNavierStokes::divergence(int column, int row) {
@@ -202,6 +240,12 @@ bool App::BasicNavierStokes::in_circle(int column, int row) {
     int yy = row - _height / 2;
 
     return (xx * xx + yy * yy <= _width*_width / 256);
+    // if (xx * xx + yy * yy <= _width*_width / 256) return true;
+    // else return (_width * 3 / 5 < column && _width * 4 / 5 > column && (
+    //         (row > _height / 7  && row < _height * 2 / 7) ||
+    //         (row > _height * 3 / 7  && row < _height * 4 / 7) ||
+    //         (row > _height * 5 / 7  && row < _height * 6 / 7) )) 
+    //         || (_width * 14 / 20 < column && _width * 3 / 4 && row > _height / 7 && row < _height * 6 / 7) ;
 }
 
 void App::BasicNavierStokes::get_closest(int column, int row) {
@@ -215,4 +259,33 @@ void App::BasicNavierStokes::get_closest(int column, int row) {
         }
     }
     _density_lookup[row * _width + column] = index;
+}
+
+
+float App::BasicNavierStokes::x_grad_x(int column, int row) {
+    return - _res * (_h_vels[row * (_width + 1) + column] - _h_vels[row * (_width + 1) + column + 1]);
+}
+
+float App::BasicNavierStokes::x_grad_y(int column, int row) {
+    int top_row = row < _height - 1 ? row + 1 : row;
+    int bottom_row = row > 0 ? row - 1 : row;
+    
+    return _res * 0.5 * (_h_vels[top_row * (_width + 1) + column]
+            + _h_vels[top_row * (_width + 1) + column + 1]
+            - _h_vels[bottom_row * (_width + 1) + column]
+            - _h_vels[bottom_row * (_width + 1) + column + 1]
+            );
+}
+
+float App::BasicNavierStokes::y_grad_x(int column, int row) {
+    int left = column > 0 ? column - 1 : column;
+    int right = column < _width - 1 ? column + 1 : column;
+    return _res * 0.5 * (_v_vels[row * _width + right]
+            + _v_vels[(row + 1) * _width + right]
+            - _v_vels[row * _width + left]
+            - _v_vels[(row + 1) * _width + left]);
+}
+
+float App::BasicNavierStokes::y_grad_y(int column, int row) {
+    return _res * (_v_vels[(row + 1) * _width + column] - _v_vels[row * _width + column]);
 }

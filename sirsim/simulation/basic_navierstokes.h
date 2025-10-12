@@ -31,6 +31,11 @@ struct BasicNavierStokes {
     bool is_mutable_v(int index);
     bool in_circle(int column, int row);
     void get_closest(int column, int row);
+
+    float x_grad_x(int column, int row);
+    float x_grad_y(int column, int row);
+    float y_grad_x(int column, int row);
+    float y_grad_y(int column, int row);
 public: 
     BasicNavierStokes(int w, int h);
     ~BasicNavierStokes();

@@ -8,7 +8,7 @@
 // Constructor
 //
 
-App::SceneViewer2D::SceneViewer2D(): _sim(100, 50) {}
+App::SceneViewer2D::SceneViewer2D(): _sim(200, 100) {}
 App::SceneViewer2D::~SceneViewer2D() {}
 
 // 
