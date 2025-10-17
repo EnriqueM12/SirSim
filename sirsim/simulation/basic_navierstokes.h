@@ -2,6 +2,14 @@
 
 namespace App {
 struct BasicNavierStokes {
+public:
+    struct SimParameters {
+        int iters;
+        float oc, res, speed;
+    };
+
+private: 
+
     float *_h_vels;
     float *_v_vels;
     bool *_h_boundary;
@@ -14,11 +22,17 @@ struct BasicNavierStokes {
 
     int _width;
     int _height;
-    int _iterations;
 
+    union {
+        struct {
+    int _iterations;
     float _over_correction;
     float _res;
-    float _speed;
+    float _speed; };
+        SimParameters _params;
+    };
+
+    float _last_speed;
 
     void external_forces(int column, int row, float dt);
     float divergence(int column, int row);
@@ -45,5 +59,7 @@ public:
     inline int GetWidth() { return _width; }
     inline int GetHeight() { return _height; }
     inline float* GetDensity() { return _dg1; }
+
+    inline SimParameters& GetParameters() { return _params; }
 };
 }

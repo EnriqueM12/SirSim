@@ -70,13 +70,14 @@ App::BasicNavierStokes::BasicNavierStokes(int w, int h) {
     for (int j = 0; j < h; ++j) {
         // _h_vels[j * (_width + 1)] = _speed;
         // _h_vels[j * (_width + 1) + _width] = _speed;
-        _h_vels[j * (_width + 1)] = std::abs(_speed * (1.0 * h / _height - 0.5));
+        _h_vels[j * (_width + 1)] = _speed;
         _total_speed += _h_vels[j* (_width +1)];
         // _h_vels[j * (_width + 1) + _width] = std::abs(_speed * (2.0 * h / _height + 1.0));
     }
     for (int j = 0; j < h; ++j) {
         _h_vels[j * (_width + 1) + _width] = _total_speed / h;
     }
+    _last_speed = _speed;
 }
 
 App::BasicNavierStokes::~BasicNavierStokes() {
@@ -90,6 +91,21 @@ App::BasicNavierStokes::~BasicNavierStokes() {
 }
 
 void App::BasicNavierStokes::UpdateFrame(float dt) {
+    if (_speed != _last_speed) {
+        float _total_speed = 0.0;
+        for (int j = 0; j < _height; ++j) {
+            // _h_vels[j * (_width + 1)] = _speed;
+            // _h_vels[j * (_width + 1) + _width] = _speed;
+            _h_vels[j * (_width + 1)] = _speed;
+            _total_speed += _h_vels[j* (_width +1)];
+            // _h_vels[j * (_width + 1) + _width] = std::abs(_speed * (2.0 * h / _height + 1.0));
+        }
+        // for (int j = 0; j < _height; ++j) {
+        //     _h_vels[j * (_width + 1) + _width] = _total_speed / _height;
+        // }
+        _last_speed = _speed;
+    }
+
     for (int j = 0; j < _height; ++j )
         for (int i = 0; i < _width; ++i)
             external_forces(i, j, dt);
